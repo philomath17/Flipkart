@@ -1,10 +1,10 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect,get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 
 # Create your views here.
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
-from .models import Product,Cart,Orders
+from .models import Product,Cart,Orders,Address,Payment
 
 
 def index(req):
@@ -279,3 +279,100 @@ def searchproduct(req):
     
     context={'allproducts':allproducts}
     return render(req,'index.html',context)
+
+
+def showcarts(req):
+    username=req.user
+    allcarts=Cart.objects.filter(userid=username.id)
+    print(allcarts)
+    totalitems=len(allcarts)
+    totalamount=0
+    for x in allcarts:
+        totalamount+=x.productid.price*x.qty
+    if username.is_authenticated:
+        context={'allcarts':allcarts,"username":username, "totalitems":totalitems,"totalamount":totalamount}
+    else:
+        context={'allcarts':allcarts, 'totalitems':totalitems,'totalamount':totalamount}
+    return render(req,'showcarts.html',context)
+
+def addtocart(req,productid):
+    if req.user.is_authenticated:
+        userid=req.user
+    else:
+        userid=None
+        
+    allproducts=get_object_or_404(Product,productid=productid)
+    cartitem,created=Cart.objects.get_or_create(userid=userid,productid=allproducts)
+    print(cartitem)
+    print(created)
+    if not created:
+        cartitem.qty+=1
+    else:
+        cartitem.qty=1
+    cartitem.save()
+    return redirect("/showcarts")
+
+def removecart(req,productid):
+        if req.user.is_authenticated:
+            userid=req.user
+        else:
+            userid=None
+
+        cartitems=Cart.objects.get(productid=productid,userid=userid)
+        cartitems.delete()
+        return redirect("/showcarts")
+    
+def updateqty(req,qv,productid):
+    allcarts=Cart.objects.filter(productid=productid)
+    if qv==1:
+        total=allcarts[0].qty+1
+        allcarts.update(qty=total)
+    else:
+        if allcarts[0].qty>1:
+            total=allcarts[0].qty-1
+            allcarts.update(qty=total)
+        else:
+            allcarts=Cart.objects.filter(productid=productid)
+            allcarts.delete()
+    return redirect("/showcarts")
+
+from .forms import AddressForm
+
+def addaddress(req):
+    if req.user.is_authenticated:
+        if req.method=="POST":
+            form=AddressForm(req.POST)
+
+            if form.is_valid():
+                address=form.save(commit=False)
+                address.userid=req.user
+                address.save()
+                return redirect('/showcarts')
+        
+        else:
+            form=AddressForm()
+
+        context={'form':form}
+        return render(req, 'addaddress.html',context)
+    else:
+        return redirect('/signin')
+
+def showaddress(req):
+    if req.user.is_authenticated:
+        address=Address.objects.filter(userid=req.user)
+        if req.method=="POST":
+            return redirect("/showcarts")
+        
+        context={'address':address}
+        return render(req,'showaddress.html',context)
+    
+    else:
+        return redirect('/sigin')
+
+def payment(req):
+    import razorpay
+    client = razorpay.Client(auth=("rzp_test_wH0ggQnd7iT3nB", "eZseshY3oSsz2fcHZkTiSlCm"))
+
+    data = { "amount": 500, "currency": "INR", "receipt": "order_rcptid_11" }
+    payment = client.order.create(data=data) # Amount is in currency subunits. Default currency is INR. Hence, 50000 refers to 50000 paise
+    return render(req,'payment.html')
