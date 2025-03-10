@@ -4,7 +4,7 @@ from django.contrib.auth import authenticate, login, logout
 # Create your views here.
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
-from .models import Product,Cart,Orders,Address,Payment
+from .models import Product,Cart,Orders, Address,Payment
 
 
 def index(req):
@@ -173,62 +173,54 @@ def reset_password(req, uname):
             return render(req, "reset_password.html", context)
 
 def about(req):
-    return render(req,'about.html')
-
+    return render(req,"about.html")
 def contact(req):
-    return render(req,'contact.html')
-
+    return render(req,"contact.html")
 
 def mobilelist(req):
     if req.method=="GET":
         allproducts=Product.productmanager.mobile_list()
         print(allproducts)
         context={'allproducts':allproducts}
-        return render(req,'index.html',context)
+        return render(req, 'index.html',context)
     else:
         allproducts=Product.objects.all()
         print(allproducts)
         context={'allproducts':allproducts}
-        return render(req,'index.html',context)
-
-
+        return render(req, 'index.html',context)
 def clothlist(req):
     if req.method=="GET":
         allproducts=Product.productmanager.cloth_list()
         print(allproducts)
         context={'allproducts':allproducts}
-        return render(req,'index.html',context)
+        return render(req, 'index.html',context)
     else:
         allproducts=Product.objects.all()
         print(allproducts)
         context={'allproducts':allproducts}
-        return render(req,'index.html',context)
-
+        return render(req, 'index.html',context)
 def shoeslist(req):
     if req.method=="GET":
         allproducts=Product.productmanager.shoes_list()
         print(allproducts)
         context={'allproducts':allproducts}
-        return render(req,'index.html',context)
+        return render(req, 'index.html',context)
     else:
         allproducts=Product.objects.all()
         print(allproducts)
         context={'allproducts':allproducts}
-        return render(req,'index.html',context)
-
+        return render(req, 'index.html',context)
 def electronicslist(req):
     if req.method=="GET":
-        # allproducts=Product.productmanager.electronics_list()
-        allproducts=Product.objects.filter(category__exact="Electronics")
+        allproducts=Product.productmanager.electronics_list()
         print(allproducts)
         context={'allproducts':allproducts}
-        return render(req,'index.html',context)
+        return render(req, 'index.html',context)
     else:
         allproducts=Product.objects.all()
         print(allproducts)
         context={'allproducts':allproducts}
-        return render(req,'index.html',context)
-
+        return render(req, 'index.html',context)
 
 def showpricerange(req):
     if req.method=="GET":
@@ -237,29 +229,28 @@ def showpricerange(req):
         r1=req.POST["min"]
         r2=req.POST["max"]
         if r1 is not None and r2 is not None and r1.isdigit() and r2.isdigit():
-            allproducts=Product.objects.filter(price__range=(r1,r2))
-            #allproducts=Product.productmanager.pricerange(r1,r2)
+            allproducts=Product.productmanager.pricerange(r1,r2)
             context={'allproducts':allproducts}
             return render(req,'index.html',context)
         else:
-            allproducts=Product.objects.all()
+            allproducts=Product.productmanager.pricerange(r1,r2)
             context={'allproducts':allproducts}
-            return render(req,'index.html',context)
-
+            return render(req,'index.html',context)   
 
 def sortingbyprice(req):
-    sortoption=req.GET.get("sort")
-    if sortoption=="low_to_high":
-        allproducts=Product.objects.order_by("price")  #ascending order
-        print(allproducts)
-    elif sortoption=="high_to_low":
-        allproducts=Product.objects.order_by("-price")  #descending order
-        print(allproducts)
-    else:
-        allproducts=Product.objects.all()
+        sortoption=req.GET.get("sort")
+        if sortoption=="low_to_high":
+            allproducts=Product.objects.order_by("price")
+            print(allproducts)
+        elif sortoption=="high_to_low":
+            allproducts=Product.objects.order_by("-price")
+            print(allproducts)
+        
+        else:
+            allproducts=Product.objects.all()
 
-    context={'allproducts':allproducts}
-    return render(req,'index.html',context)
+        context={'allproducts':allproducts}
+        return render(req,'index.html',context)
 
 
 from django.db.models import Q
@@ -279,28 +270,26 @@ def searchproduct(req):
     
     context={'allproducts':allproducts}
     return render(req,'index.html',context)
-
-
+    
 def showcarts(req):
     username=req.user
     allcarts=Cart.objects.filter(userid=username.id)
-    print(allcarts)
     totalitems=len(allcarts)
     totalamount=0
     for x in allcarts:
         totalamount+=x.productid.price*x.qty
     if username.is_authenticated:
-        context={'allcarts':allcarts,"username":username, "totalitems":totalitems,"totalamount":totalamount}
+        context={'allcarts':allcarts,"username":username,'totalitems':totalitems,'totalamount':totalamount}
     else:
         context={'allcarts':allcarts, 'totalitems':totalitems,'totalamount':totalamount}
     return render(req,'showcarts.html',context)
 
 def addtocart(req,productid):
     if req.user.is_authenticated:
-        userid=req.user
+        userid=req.user 
     else:
         userid=None
-        
+
     allproducts=get_object_or_404(Product,productid=productid)
     cartitem,created=Cart.objects.get_or_create(userid=userid,productid=allproducts)
     print(cartitem)
@@ -313,15 +302,15 @@ def addtocart(req,productid):
     return redirect("/showcarts")
 
 def removecart(req,productid):
-        if req.user.is_authenticated:
-            userid=req.user
-        else:
-            userid=None
+    if req.user.is_authenticated:
+        userid=req.user
+    else:
+        userid=None
 
-        cartitems=Cart.objects.get(productid=productid,userid=userid)
-        cartitems.delete()
-        return redirect("/showcarts")
-    
+    cartitems=Cart.objects.get(productid=productid,userid=userid)
+    cartitems.delete()
+    return redirect("/showcarts")
+
 def updateqty(req,qv,productid):
     allcarts=Cart.objects.filter(productid=productid)
     if qv==1:
@@ -338,24 +327,49 @@ def updateqty(req,qv,productid):
 
 from .forms import AddressForm
 
-def addaddress(req):
+def addaddress_all(req):
     if req.user.is_authenticated:
+       
         if req.method=="POST":
             form=AddressForm(req.POST)
-
             if form.is_valid():
                 address=form.save(commit=False)
                 address.userid=req.user
                 address.save()
-                return redirect('/showcarts')
-        
+                return redirect("/showaddress")
         else:
             form=AddressForm()
-
         context={'form':form}
-        return render(req, 'addaddress.html',context)
+        return render(req,'addaddress.html',context)
     else:
-        return redirect('/signin')
+        return redirect("/signin")   
+
+
+def addaddress_single(req,productid=None):
+    if req.user.is_authenticated:
+        print(productid)
+        if productid==None:
+            payment_type="all"
+            req.session["payment_type"]=payment_type
+        else:
+            payment_type="single"
+            req.session["payment_type"]=payment_type
+            req.session["productid"]=productid
+        print(payment_type)
+       
+        if req.method=="POST":
+            form=AddressForm(req.POST)
+            if form.is_valid():
+                address=form.save(commit=False)
+                address.userid=req.user
+                address.save()
+                return redirect("/showaddress")
+        else:
+            form=AddressForm()
+        context={'form':form}
+        return render(req,'addaddress.html',context)
+    else:
+        return redirect("/signin")       
 
 def showaddress(req):
     if req.user.is_authenticated:
@@ -364,25 +378,30 @@ def showaddress(req):
             return redirect("/showcarts")
         
         context={'address':address}
-        return render(req,'showaddress.html',context)
-    
+        return render(req,"showaddress.html",context)
     else:
-        return redirect('/sigin')
+        return redirect("/signin")
+
 import razorpay
 import random
 from django.conf import settings
 from django.core.mail import send_mail
-
 def payment(req):
     if req.user.is_authenticated:
         try:
-            cartitems=Cart.objects.filter(userid=req.user.id)
+            payment_type=req.session.get("payment_type")
+            productid=req.session.get("productid")
+            print(payment_type,productid)
+            
+            if payment_type=="single":
+                cartitems=Cart.objects.filter(userid=req.user.id,productid=productid)
+            else:
+                cartitems=Cart.objects.filter(userid=req.user.id)
+
             totalamount=sum(i.productid.price*i.qty for i in cartitems)
             print(totalamount)
             userid=req.user
 
-           
-            
             for items in cartitems:
                 orderid=random.randrange(1000,9000000)
                 orderdata=Orders.objects.create(orderid=orderid,productid=items.productid,userid=userid,qty=items.qty)
@@ -394,16 +413,17 @@ def payment(req):
             print(orderid,receiptid)
 
             client = razorpay.Client(auth=("rzp_test_wH0ggQnd7iT3nB", "eZseshY3oSsz2fcHZkTiSlCm"))
-            data = { "amount": totalamount*100, "currency": "INR", "receipt": str(receiptid) }
+            data = { "amount": totalamount*100, "currency": "INR", "receipt": "str(receptid)" }
             payment = client.order.create(data=data) # Amount is in currency subunits. Default currency is INR. Hence, 50000 refers to 50000 paise
+            
             cartitems.delete()
 
-            subject=f"FlipkartClone Payment Status for your Order={orderid}"
-            msg=f"Hi {userid},Thank you using our services\n Total Amount Paid by you is {totalamount}"
-            emailfrom=settings.EMAIL_HOST_USER
-            receiver=[userid]
-            send_mail(subject,msg,emailfrom,receiver)
-
+            # subject=f"FlipkartClone Payment Stauts for your Order={orderid}"
+            # msg=f"Hello {userid},Thanks for using ourservices\n Total paid bt you is {totalamount}"
+            # emailfrom=settings.EMAIL_HOST_USER
+            # receiver=[userid]
+            # send_mail(subject,msg,emailfrom,receiver)
+            
             context={"data":payment,"amount":totalamount}
 
         except:
@@ -418,10 +438,9 @@ def showorders(req):
         context={'allpayment':allpayment}
         return render(req,'showorders.html',context)
 
-# seller operation (CRUD)
+# seller operation (CURD)
 from django.views.generic.edit import CreateView,UpdateView,DeleteView
 from django.views.generic.list import ListView
-
 
 class ProductRegister(CreateView):
     model=Product
@@ -433,12 +452,14 @@ class ProductRegister(CreateView):
         form.instance.userid = self.request.user
         return super().form_valid(form)
 
+
+
 class ProductList(ListView):
     model=Product
     def get_queryset(self):
-        user = self.request.user
+        user=self.request.user
         return Product.objects.filter(userid=user)
-
+        
 class ProductDelete(DeleteView):
     model=Product
     success_url='/ProductList'
@@ -449,3 +470,5 @@ class ProductUpdate(UpdateView):
     # fields="__all__"
     fields=["productname","category","description","price","images"]
     success_url='/ProductList'
+
+

@@ -26,7 +26,8 @@ urlpatterns = [
     path('addtocart/<productid>/',views.addtocart,name='addtocart'),
     path('removecart/<productid>/',views.removecart,name='removecart'),
     path('updateqty/<int:qv>/<productid>/',views.updateqty,name='updateqty'),
-    path('addaddress/',views.addaddress,name='addaddress'),
+    path('addaddress_single/<productid>/',views.addaddress_single,name='addaddress_single'),
+    path('addaddress_all/',views.addaddress_all,name='addaddress_all'),
     path('showaddress/',views.showaddress,name='showaddress'),
     path('payment/',views.payment,name='payment'),
     path('showorders/',views.showorders,name='showorders'),
@@ -34,4 +35,5 @@ urlpatterns = [
     path('ProductList/',ProductList.as_view(),name='ProductList'),
     path('ProductDelete/<int:pk>',ProductDelete.as_view(),name='ProductDelete'),
     path('ProductUpdate/<int:pk>',ProductUpdate.as_view(),name='ProductUpdate'),
+
 ]
